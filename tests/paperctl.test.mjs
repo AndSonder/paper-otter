@@ -83,6 +83,35 @@ test('rejects a retrofitted workflow with future drafts already present',async()
   assert.match(result.stderr + result.stdout,/Future writing stages already exist/);
 });
 
+test('rejects unsupported math delimiters before completing an article',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-math-delimiter-'));
+  const paperDir=join(root,'.paper-daily','papers','bad-math'); await mkdir(paperDir,{recursive:true});
+  await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata('bad-math')));
+  run(root,'writing-begin','bad-math');
+  for (const stage of ['evidence','logic-draft','logic-review','reader-draft','reader-report','revision-notes']) {
+    await writeFile(join(paperDir,`${stage}.md`),`# ${stage}\n`); run(root,'writing-record','bad-math',stage);
+  }
+  await writeFile(join(paperDir,'article.md'),'\\[x=1\\]\n');
+  const result=execute(root,'writing-record','bad-math','article');
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr + result.stdout,/use \$\$\.\.\.\$\$ instead/);
+  assert.equal(await readFile(join(paperDir,'writing.json'),'utf8').catch(()=>''),'');
+});
+
+test('rejects invalid KaTeX before completing an article',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-invalid-katex-'));
+  const paperDir=join(root,'.paper-daily','papers','invalid-katex'); await mkdir(paperDir,{recursive:true});
+  await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata('invalid-katex')));
+  run(root,'writing-begin','invalid-katex');
+  for (const stage of ['evidence','logic-draft','logic-review','reader-draft','reader-report','revision-notes']) {
+    await writeFile(join(paperDir,`${stage}.md`),`# ${stage}\n`); run(root,'writing-record','invalid-katex',stage);
+  }
+  await writeFile(join(paperDir,'article.md'),'$$\\frac{1{$$\n');
+  const result=execute(root,'writing-record','invalid-katex','article');
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr + result.stdout,/invalid KaTeX/);
+});
+
 test('orders the latest daily primary first instead of using folder order',async()=> {
   const root=await mkdtemp(join(tmpdir(),'paper-otter-daily-order-'));
   for (const id of ['01-older','deepseek-v41']) {

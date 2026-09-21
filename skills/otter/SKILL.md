@@ -51,7 +51,7 @@ python3 scripts/paperctl.py writing-record <paper-id> revision-notes
 python3 scripts/paperctl.py writing-record <paper-id> article
 ```
 
-`logic-review` 和 `reader-report` 必须来自 skill 要求的独立上下文。文章必须从 evidence 与 logic draft 生长出来；禁止先写最终稿，再倒填阶段文件。已有聊天回答、短导读或研究笔记只能作为素材放入 evidence，不能复制成 logic draft。不要把生成文章提交到框架仓库。`paperctl.py sync` 会校验阶段顺序、每阶段哈希链和最终 manifest；不要手写 `writing.json` 或 `writing-workflow.json`，也不要绕过门禁。
+登记 `article` 时脚本会调用 KaTeX 检查全部数学公式，并拒绝不兼容定界符、未闭合公式和非法 LaTeX；检查失败不得生成完成 manifest。`logic-review` 和 `reader-report` 必须来自 skill 要求的独立上下文。文章必须从 evidence 与 logic draft 生长出来；禁止先写最终稿，再倒填阶段文件。已有聊天回答、短导读或研究笔记只能作为素材放入 evidence，不能复制成 logic draft。不要把生成文章提交到框架仓库。`paperctl.py sync` 会校验阶段顺序、每阶段哈希链和最终 manifest；不要手写 `writing.json` 或 `writing-workflow.json`，也不要绕过门禁。
 
 只有 `$otter write` 完成全部阶段后才运行：
 

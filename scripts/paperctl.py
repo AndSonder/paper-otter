@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Manage the local, private data consumed by the paper-daily reader."""
 from __future__ import annotations
-import argparse, hashlib, json, os, shutil
+import argparse, hashlib, json, os, shutil, subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 ROOT = Path(os.environ.get("PAPER_DAILY_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -12,12 +12,19 @@ REQUIRED_PAPER = {"id", "title", "englishTitle", "year", "tags", "minutes", "rea
 WRITING_FILES = {"article.md", "evidence.md", "logic-draft.md", "logic-review.md", "reader-draft.md", "reader-report.md", "revision-notes.md"}
 WRITING_STAGES = ["evidence", "logic-draft", "logic-review", "reader-draft", "reader-report", "revision-notes", "article"]
 STAGE_FILES = {stage: f"{stage}.md" for stage in WRITING_STAGES}
+ARTICLE_VALIDATOR = Path(__file__).with_name("validate_article.mjs")
 
 def load_json(path: Path) -> dict:
     try: value = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as exc: raise SystemExit(f"Cannot read valid JSON from {path}: {exc}") from exc
     if not isinstance(value, dict): raise SystemExit(f"Expected a JSON object in {path}")
     return value
+
+def validate_article_format(article: Path) -> None:
+    result = subprocess.run(["node", str(ARTICLE_VALIDATOR), str(article)], text=True, capture_output=True)
+    if result.returncode:
+        details = (result.stderr or result.stdout).strip()
+        raise SystemExit(f"{article}: article format validation failed: {details}")
 
 def validate_profile(profile: dict) -> None:
     missing = sorted(REQUIRED_PROFILE - profile.keys())
@@ -98,6 +105,7 @@ def writing_record(paper_id: str, stage: str) -> None:
         raise SystemExit(f"Expected writing stage {expected}, got {stage}")
     stage_path = paper_dir / STAGE_FILES[stage]
     if not stage_path.is_file() or not stage_path.read_text().strip(): raise SystemExit(f"Missing or empty stage file: {stage_path}")
+    if stage == "article": validate_article_format(stage_path)
     future = [STAGE_FILES[name] for name in WRITING_STAGES[len(completed) + 1:] if (paper_dir / STAGE_FILES[name]).exists()]
     if future: raise SystemExit(f"Future writing stages already exist before {stage}: {', '.join(future)}")
     digest = hashlib.sha256(stage_path.read_bytes()).hexdigest()
@@ -112,6 +120,28 @@ def writing_record(paper_id: str, stage: str) -> None:
         (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
         print(f"Completed ordered writing workflow for {paper_id}")
     else: print(f"Recorded {stage}; next stage: {WRITING_STAGES[len(completed)]}")
+
+def writing_format(paper_id: str) -> None:
+    paper_dir = STATE / "papers" / paper_id
+    workflow_path = paper_dir / "writing-workflow.json"
+    workflow = load_json(workflow_path)
+    completed = workflow.get("completed", [])
+    if workflow.get("status") != "complete" or [item.get("stage") for item in completed] != WRITING_STAGES:
+        raise SystemExit(f"Cannot format an incomplete writing workflow for {paper_id}")
+    article = paper_dir / "article.md"
+    before = article.read_text()
+    after = "\n".join("$$" if line.strip() in {r"\[", r"\]"} else line for line in before.split("\n"))
+    if after == before: validate_article_format(article); print(f"No deterministic format fixes needed for {paper_id}"); return
+    article.write_text(after)
+    validate_article_format(article)
+    digest = hashlib.sha256(article.read_bytes()).hexdigest()
+    completed[-1].update({"sha256": digest, "recordedAt": datetime.now(timezone.utc).isoformat()})
+    workflow["formatFixes"] = [*workflow.get("formatFixes", []), {"kind": "display-math-delimiters", "recordedAt": datetime.now(timezone.utc).isoformat()}]
+    workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
+    workflow_digest = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
+    manifest = {"version": 2, "status": "complete", "pipeline": "sujianlin-write-skills", "articleSha256": digest, "workflowSha256": workflow_digest}
+    (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    print(f"Applied deterministic article format fixes for {paper_id}")
 
 def daily_order() -> list[str]:
     daily_root = STATE / "daily"
@@ -181,6 +211,7 @@ def main() -> None:
     sub.add_parser("sync"); sub.add_parser("validate")
     writing_start = sub.add_parser("writing-begin"); writing_start.add_argument("paper_id"); writing_start.add_argument("--restart", action="store_true")
     writing_checkpoint = sub.add_parser("writing-record"); writing_checkpoint.add_argument("paper_id"); writing_checkpoint.add_argument("stage", choices=WRITING_STAGES)
+    writing_fix = sub.add_parser("writing-format"); writing_fix.add_argument("paper_id")
     history = sub.add_parser("import-history"); history.add_argument("path", type=Path)
     add_event = sub.add_parser("event"); add_event.add_argument("paper_id"); add_event.add_argument("type", choices=["opened", "liked", "saved", "dismissed", "finished"]); add_event.add_argument("value", nargs="?", default=True)
     args = parser.parse_args()
@@ -189,6 +220,7 @@ def main() -> None:
     elif args.command == "validate": validate()
     elif args.command == "writing-begin": writing_begin(args.paper_id, args.restart)
     elif args.command == "writing-record": writing_record(args.paper_id, args.stage)
+    elif args.command == "writing-format": writing_format(args.paper_id)
     elif args.command == "import-history": import_history(args.path)
     else: event(args)
 if __name__ == "__main__": main()
