@@ -66,7 +66,7 @@ export default function Reader() {
 
   if (!paper) return <div className="app">
     <header className="topbar"><span className="brand"><span className="book-mark" aria-hidden="true"><i /><i /></span>每日论文</span><div className="header-tools"><span className="header-caption">让推荐从你的真实问题开始。</span><span className="avatar">阅</span></div></header>
-    <main className="setup-empty"><span className="eyebrow">PERSONAL READING SYSTEM</span><h1>{catalogReady ? "先建立你的阅读画像" : "正在读取本地阅读空间…"}</h1>{catalogReady && <><p>这个仓库不预装论文。使用 <code>$daily-paper-recommender</code> 回答几组引导问题，大模型会在本地建立画像，并从你的目标、阅读行为和明确反馈中学习。</p><ol><li>初始化关注的问题、已有知识与阅读习惯</li><li>让 skill 推荐今天的一篇主读和少量备选</li><li>运行 <code>python3 scripts/paperctl.py sync</code>，回到这里阅读</li></ol><div className="setup-command">$daily-paper-recommender 初始化我的阅读系统</div></>}</main>
+    <main className="setup-empty"><span className="eyebrow">PERSONAL READING SYSTEM</span><h1>{catalogReady ? "先挑几篇你会点开的论文" : "正在读取本地阅读空间…"}</h1>{catalogReady && <><p>这个仓库不预装论文。使用 <code>$daily-paper-recommender</code> 获取一组真实候选，凭第一感觉选几篇即可；大模型会从这些选择和后续阅读中慢慢认识你。</p><ol><li>从具体论文卡片中选出想打开的内容</li><li>获得今天的一篇主读和少量备选</li><li>运行 <code>python3 scripts/paperctl.py sync</code>，回到这里阅读</li></ol><div className="setup-command">$daily-paper-recommender 给我一组候选，初始化阅读系统</div></>}</main>
   </div>;
 
   return <div className={focus ? "app focused" : "app"}>
