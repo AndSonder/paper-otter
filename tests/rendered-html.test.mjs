@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 const origin = process.env.PAPER_DAILY_TEST_URL ?? 'http://localhost:3000';
 const headers = { 'oai-authenticated-user-id': 'integration-test', 'oai-authenticated-user-email': 'test@example.invalid', 'Content-Type':'application/json', Origin: origin };
@@ -8,6 +9,14 @@ async function records(customHeaders=headers) { const response = await fetch(`${
 test('serves the personalized reader onboarding without bundled papers',async()=> {
   const response = await fetch(origin); assert.equal(response.status,200);
   const html = await response.text(); assert.match(html,/Paper Otter/); assert.match(html,/PERSONAL READING SYSTEM/); assert.doesNotMatch(html,/FLUX 如何把跨卡搬运塞进 GEMM|codex-preview|Building your site/);
+});
+
+test('uses only the unified otter commands in the reader UI',async()=> {
+  const source=await readFile(new URL('../components/Reader.tsx',import.meta.url),'utf8');
+  assert.match(source,/\$otter init/);
+  assert.match(source,/\$otter recommend/);
+  assert.match(source,/\$otter write/);
+  assert.doesNotMatch(source,/daily-paper-recommender/);
 });
 test('persists independent feedback, makes session retries idempotent, isolates readers',async()=> {
   const paperId='2404.19429', sessionId=crypto.randomUUID();

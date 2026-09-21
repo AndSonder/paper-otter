@@ -15,7 +15,7 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 - `$otter recommend`：读取现有画像和反馈，推荐今天的论文。这个动作只能生成候选审计、daily 选择和 `paper.json`，不能生成正文。
 - `$otter write <paper-id 或论文链接>`：为指定论文生成中文精读稿。必须从有序写作状态机开始，不能把已经写好的摘要、速读稿或聊天回答补齐文件后冒充完整流程。
 
-不要继续使用 `$daily-paper-recommender` 或单独暴露写作 skill；`$otter write` 在内部调用 `sujianlin-write-skills`。
+只暴露 `$otter`，不要保留旧入口或单独暴露写作 skill；`$otter write` 在内部调用 `sujianlin-write-skills`。
 
 ## 首次初始化
 
