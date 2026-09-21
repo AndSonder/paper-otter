@@ -22,6 +22,8 @@ description: 将不同学科的学术论文写成中文自然、论证连贯、�
 
 完整文章保存 `logic-draft.md`、`logic-review.md`、实际送读的 `reader-draft.md`、`reader-report.md`、最终 `article.md`，以及简短的 `revision-notes.md` 和 `evidence.md`。阶段文件用于追溯，用户通常只读最终正文。短段落润色直接交付改稿，除非用户要求，不生成这些阶段文件，也不套用完整文章的送读流程。修改后核对实际保存稿，尤其检查本轮新加的推理、事实和图注；模型读者通过不等于真实用户满意。
 
+由每日推荐框架调用时，验证通过后生成 `writing.json`：`version` 为 1，`status` 为 `complete`，`pipeline` 为 `sujianlin-write-skills`，`articleSha256` 为最终 `article.md` UTF-8 内容的 SHA256。修改正文后必须重新验证并更新哈希；没有完成标记的正文不会被网站发布。
+
 由每日推荐框架调用时，以上文件保存在 `.paper-daily/papers/<paper-id>/`，不得加入框架仓库。
 
 ## 核心要求

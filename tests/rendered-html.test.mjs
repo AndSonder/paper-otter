@@ -7,7 +7,7 @@ async function records(customHeaders=headers) { const response = await fetch(`${
 
 test('serves the personalized reader onboarding without bundled papers',async()=> {
   const response = await fetch(origin); assert.equal(response.status,200);
-  const html = await response.text(); assert.match(html,/每日论文/); assert.match(html,/PERSONAL READING SYSTEM/); assert.doesNotMatch(html,/FLUX 如何把跨卡搬运塞进 GEMM|codex-preview|Building your site/);
+  const html = await response.text(); assert.match(html,/Paper Otter/); assert.match(html,/PERSONAL READING SYSTEM/); assert.doesNotMatch(html,/FLUX 如何把跨卡搬运塞进 GEMM|codex-preview|Building your site/);
 });
 test('persists independent feedback, makes session retries idempotent, isolates readers',async()=> {
   const paperId='2404.19429', sessionId=crypto.randomUUID();

@@ -23,7 +23,9 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 
 每天默认交付一篇主读和最多两篇备选。主读必须给出：它连接到哪个当前目标、今天为什么值得读、预计阅读时间、需要的前置知识、可能不适合的原因。推荐理由要引用候选的具体贡献或实验，不写泛泛的“与你兴趣相关”。
 
-把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。用户要求生成中文精读稿时，再调用仓库内 `skills/sujianlin-write-skills` 的流程，产物放入 `.paper-daily/papers/<paper-id>/`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。不要把生成文章提交到框架仓库。
+把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。推荐阶段只写 `paper.json` 元数据，`sections` 必须省略或保持空数组；严禁用摘要改写、提纲或占位段落冒充正文。
+
+用户要求生成中文精读稿时，必须调用仓库内 `skills/sujianlin-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。不要把生成文章提交到框架仓库。`paperctl.py sync` 会拒绝没有完整阶段文件和有效 `writing.json` 的正文；不要绕过门禁。
 
 完成或更新论文后运行：
 

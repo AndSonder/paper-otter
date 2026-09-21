@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { isPaper, type Paper } from "../lib/papers";
 import { reasons } from "../lib/reading";
 import { useReading } from "./useReading";
-import Timeline from "./Timeline";
 import MarkdownArticle from "./MarkdownArticle";
 
 type View = "today" | "library" | "saved" | "history";
@@ -16,7 +15,6 @@ export default function Reader() {
   const [selected, setSelected] = useState("");
   const [view, setView] = useState<View>("today");
   const [focus, setFocus] = useState(false);
-  const [bilingual, setBilingual] = useState(false);
   const [query, setQuery] = useState("");
   const [searching, setSearching] = useState(false);
   const [activeSection, setActiveSection] = useState(0);
@@ -96,10 +94,9 @@ export default function Reader() {
           <article id="paper-article" style={{ "--reading-size": `${size}px` } as React.CSSProperties}>
             <div className="article-meta"><span className="badge">{paper.markdown ? "今日精读" : "经典论文"}</span><span>{paper.year}</span><span>·</span><span>阅读约 {paper.minutes} 分钟</span></div>
             <h1>{paper.title}</h1><p className="english-title">{paper.englishTitle}</p>
-            <div className="reading-toolbar">{!paper.markdown && <div className="mode-switch" aria-label="导读语言"><button aria-pressed={!bilingual} className={!bilingual ? "active" : ""} onClick={() => setBilingual(false)}>中文导读</button><button aria-pressed={bilingual} className={bilingual ? "active" : ""} onClick={() => setBilingual(true)}>双语导读</button></div>}<div className="feedback-actions"><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.saved} onClick={() => feedback("saved",record?.saved ? 0 : 1)}>{record?.saved ? "▣ 已收藏" : "♧ 收藏"}</button><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.liked} onClick={() => feedback("liked",record?.liked ? 0 : 1)}>{record?.liked ? "♥ 已点赞" : "♡ 点赞"}</button><span className="divider" /><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.reason} onClick={() => rejectDialog.current?.showModal()}>{record?.reason ? "⊘ 已反馈" : "⊘ 不感兴趣"}</button></div></div>
+            <div className="reading-toolbar"><div className="feedback-actions"><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.saved} onClick={() => feedback("saved",record?.saved ? 0 : 1)}>{record?.saved ? "▣ 已收藏" : "♧ 收藏"}</button><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.liked} onClick={() => feedback("liked",record?.liked ? 0 : 1)}>{record?.liked ? "♥ 已点赞" : "♡ 点赞"}</button><span className="divider" /><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.reason} onClick={() => rejectDialog.current?.showModal()}>{record?.reason ? "⊘ 已反馈" : "⊘ 不感兴趣"}</button></div></div>
             <div className="recommendation"><span className="leaf" aria-hidden="true">❧</span><div><strong>为什么推荐给你</strong><p>{paper.reason}</p></div></div>
-            {!paper.markdown && bilingual && <p className="translation-note">英文为导读的英文释义；论文原文请通过章节下方链接查看。</p>}
-            {paper.markdown ? <MarkdownArticle markdown={paper.markdown} /> : paper.sections.map((section,i) => <section key={`${paper.id}-${i}`} id={`section-${i}`} data-section className="article-section"><h2><span>{String(i+1).padStart(2,"0")}</span>{section.title}</h2><div className="section-content">{section.paragraphs.map(text => <p key={text}>{text}</p>)}{section.diagram && <Timeline />}{bilingual && <blockquote lang="en">{section.english}</blockquote>}<a className="source-link" href={paper.source} target="_blank" rel="noreferrer">来源：论文摘要 ↗</a></div></section>)}
+            {paper.markdown ? <MarkdownArticle markdown={paper.markdown} /> : <section className="article-pending"><span>精读稿尚未生成</span><h2>这里只保存了推荐卡片</h2><p>完整正文需要经过原文核验、逻辑审稿、首次阅读检查和最终验证。完成前不会用摘要改写或占位段落代替文章。</p><a className="outline-button" href={paper.source} target="_blank" rel="noreferrer">先读论文原文 ↗</a></section>}
             <footer className="article-footer"><div><span className="eyebrow">ONE PAPER, ONE THOUGHT</span><h3>今天，带走一个新的理解。</h3><p>你的阅读和反馈，会成为下一次选文的参考。</p></div><button className="outline-button" onClick={() => changeView("library")}>回到阅读库 →</button></footer>
           </article>
         </> : <>

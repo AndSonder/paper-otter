@@ -11,6 +11,7 @@ export type Paper = {
   sections: Section[];
   terms: { name: string; meaning: string }[];
   markdown?: string;
+  contentStatus?: "metadata" | "reviewed";
   outline?: { title: string; id: string }[];
 };
 
@@ -26,6 +27,7 @@ export function isPaper(value: unknown): value is Paper {
     && Number.isInteger(paper.minutes)
     && typeof paper.reason === "string"
     && typeof paper.source === "string"
+    && (paper.contentStatus === undefined || paper.contentStatus === "metadata" || paper.contentStatus === "reviewed")
     && Array.isArray(paper.sections)
     && Array.isArray(paper.terms);
 }

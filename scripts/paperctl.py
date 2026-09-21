@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Manage the local, private data consumed by the paper-daily reader."""
 from __future__ import annotations
-import argparse, json, os, shutil
+import argparse, hashlib, json, os, shutil
 from datetime import datetime, timezone
 from pathlib import Path
 ROOT = Path(os.environ.get("PAPER_DAILY_ROOT", Path(__file__).resolve().parents[1])).resolve()
@@ -9,6 +9,7 @@ STATE = ROOT / ".paper-daily"
 CATALOG = ROOT / "public" / "local" / "catalog.json"
 REQUIRED_PROFILE = {"version", "reader", "goals", "topics", "reading", "recommendation"}
 REQUIRED_PAPER = {"id", "title", "englishTitle", "year", "tags", "minutes", "reason", "source"}
+WRITING_FILES = {"article.md", "evidence.md", "logic-draft.md", "logic-review.md", "reader-draft.md", "reader-report.md", "revision-notes.md"}
 
 def load_json(path: Path) -> dict:
     try: value = json.loads(path.read_text())
@@ -38,15 +39,33 @@ def validate_paper(metadata: dict, path: Path) -> None:
     if missing: raise SystemExit(f"{path} is missing keys: {', '.join(missing)}")
     if not isinstance(metadata["tags"], list) or not all(isinstance(v, str) for v in metadata["tags"]): raise SystemExit(f"{path}: tags must be a string array")
 
+def reviewed_article(paper_dir: Path) -> str:
+    article = paper_dir / "article.md"
+    manifest_path = paper_dir / "writing.json"
+    if not article.exists() and not manifest_path.exists(): return ""
+    if not article.exists() or not manifest_path.exists():
+        raise SystemExit(f"{paper_dir}: article.md and writing.json must be created together")
+    missing = sorted(name for name in WRITING_FILES if not (paper_dir / name).is_file())
+    if missing: raise SystemExit(f"{paper_dir}: incomplete writing workflow; missing {', '.join(missing)}")
+    manifest = load_json(manifest_path)
+    if manifest.get("version") != 1 or manifest.get("status") != "complete" or manifest.get("pipeline") != "sujianlin-write-skills":
+        raise SystemExit(f"{manifest_path}: invalid writing completion manifest")
+    content = article.read_text()
+    digest = hashlib.sha256(content.encode()).hexdigest()
+    if manifest.get("articleSha256") != digest:
+        raise SystemExit(f"{manifest_path}: article hash does not match article.md; run the writing validation again")
+    return content
+
 def sync() -> None:
     papers = []
     source_root = STATE / "papers"
     if source_root.exists():
         for metadata_path in sorted(source_root.glob("*/paper.json")):
             metadata = load_json(metadata_path); validate_paper(metadata, metadata_path)
-            article = metadata_path.with_name("article.md")
-            metadata["markdown"] = article.read_text() if article.exists() else ""
-            metadata.setdefault("sections", []); metadata.setdefault("terms", []); metadata.setdefault("outline", [])
+            metadata["markdown"] = reviewed_article(metadata_path.parent)
+            metadata["contentStatus"] = "reviewed" if metadata["markdown"] else "metadata"
+            metadata["sections"] = []
+            metadata.setdefault("terms", []); metadata.setdefault("outline", [])
             papers.append(metadata)
             asset_source = metadata_path.parent / "assets"
             if asset_source.exists():
