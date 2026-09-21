@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "reader": {"language": "zh-CN", "background": [], "tools": []},
+  "goals": [{"question": "我最近真正想解决的问题是什么？", "priority": 1, "horizon": "3 months"}],
+  "topics": {"strong": [], "learning": [], "avoid": []},
+  "reading": {"dailyMinutes": 30, "daysPerWeek": 5},
+  "recommendation": {"primaryCount": 1, "alternativeCount": 2, "explorationRate": 0.2, "recency": "balanced"},
+  "preferences": {"positiveExamples": [], "negativeExamples": [], "dropReasons": []}
+}

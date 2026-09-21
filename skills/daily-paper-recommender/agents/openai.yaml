@@ -1,0 +1,4 @@
+interface:
+  display_name: "每日论文推荐"
+  short_description: "初始化个人阅读画像，并用反馈持续改进每日论文推荐"
+  default_prompt: "使用 $daily-paper-recommender 初始化我的本地阅读系统，或根据现有画像推荐今天的一篇论文。"
