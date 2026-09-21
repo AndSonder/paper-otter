@@ -18,6 +18,8 @@
 
 画像不保存固定的“阅读产出类型”。每次推荐根据当天目标和论文类型决定应突出推导、实现、实验判断、领域关系或实践启发；用户当次提出的要求优先。
 
+冷启动时，`positiveExamples` 保存用户从种子候选中主动点选的论文 ID，`negativeExamples` 只保存用户明确选择“不会打开”的论文 ID。没有选中的卡片不自动记为负反馈。由选择推断出的主题和目标先写入 `inferences.json`，不要为了填满字段伪造确定偏好。`reading.dailyMinutes` 初始使用 30；当天选择的阅读预算属于会话条件，不立即覆盖该值。
+
 ## papers/<paper-id>/paper.json
 
 必须包含 `id`、`title`、`englishTitle`、`year`、`tags`、`minutes`、`reason` 和 `source`。可包含 `terms`、`outline`。同目录 `article.md` 是可选中文精读稿，`assets/` 保存本地图片。
