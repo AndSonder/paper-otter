@@ -1,11 +1,21 @@
 ---
-name: daily-paper-recommender
+name: otter
 description: 初始化并运行一个由大模型驱动的个性化论文阅读系统。用于首次建立本地读者画像、每天检索和推荐论文、根据打开时长与显式反馈更新偏好，或把推荐结果同步到每日论文网站。
 ---
 
-# 个性化论文阅读推荐
+# Paper Otter：个性化论文阅读系统
 
 服务一个具体读者，而不是维护公共文章库。用户画像、候选、文章和行为记录都保存在仓库的 `.paper-daily/`，不得提交到公共仓库。
+
+## 命令入口
+
+只接受三个动作；缺少动作时，先让用户从具体动作中选择，不猜测：
+
+- `$otter init`：从零初始化画像并生成首批候选。
+- `$otter recommend`：读取现有画像和反馈，推荐今天的论文。这个动作只能生成候选审计、daily 选择和 `paper.json`，不能生成正文。
+- `$otter write <paper-id 或论文链接>`：为指定论文生成中文精读稿。必须从有序写作状态机开始，不能把已经写好的摘要、速读稿或聊天回答补齐文件后冒充完整流程。
+
+不要继续使用 `$daily-paper-recommender` 或单独暴露写作 skill；`$otter write` 在内部调用 `sujianlin-write-skills`。
 
 ## 首次初始化
 
@@ -25,7 +35,23 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 
 把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。推荐阶段只写 `paper.json` 元数据，`sections` 必须省略或保持空数组；严禁用摘要改写、提纲或占位段落冒充正文。
 
-用户要求生成中文精读稿时，必须调用仓库内 `skills/sujianlin-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。不要把生成文章提交到框架仓库。`paperctl.py sync` 会拒绝没有完整阶段文件和有效 `writing.json` 的正文；不要绕过门禁。
+`$otter write` 必须调用仓库内 `skills/sujianlin-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。开始前运行 `python3 scripts/paperctl.py writing-begin <paper-id>`；若用户明确要求废弃旧稿重写，使用 `--restart`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。
+
+主线程只负责准备原始阅读目标、读者背景、论文原文和可核查证据，不写正文。必须新建一个**不继承对话历史的作者 agent**，只向它提供这些材料和 `sujianlin-write-skills`；不能提供主线程已经写过的摘要、讲解、推荐文案、用户对旧稿的批评或希望它得出的答案。作者 agent 从 evidence 开始形成 logic draft，并在逻辑审查和读者检查后负责修订直至 article。逻辑审查与首次阅读检查分别使用另外两个不继承历史的新上下文，三者不能是同一个 agent。工具不支持新上下文时，不得生成或发布完整精读稿；只能保留推荐卡并说明缺少写作运行条件。
+
+每一阶段写完后立即登记，不能提前创建后续文件：
+
+```sh
+python3 scripts/paperctl.py writing-record <paper-id> evidence
+python3 scripts/paperctl.py writing-record <paper-id> logic-draft
+python3 scripts/paperctl.py writing-record <paper-id> logic-review
+python3 scripts/paperctl.py writing-record <paper-id> reader-draft
+python3 scripts/paperctl.py writing-record <paper-id> reader-report
+python3 scripts/paperctl.py writing-record <paper-id> revision-notes
+python3 scripts/paperctl.py writing-record <paper-id> article
+```
+
+`logic-review` 和 `reader-report` 必须来自 skill 要求的独立上下文。文章必须从 evidence 与 logic draft 生长出来；禁止先写最终稿，再倒填阶段文件。已有聊天回答、短导读或研究笔记只能作为素材放入 evidence，不能复制成 logic draft。不要把生成文章提交到框架仓库。`paperctl.py sync` 会校验阶段顺序、每阶段哈希链和最终 manifest；不要手写 `writing.json` 或 `writing-workflow.json`，也不要绕过门禁。
 
 完成或更新论文后运行：
 

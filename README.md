@@ -37,16 +37,17 @@ npm run dev
 然后在仓库中调用：
 
 ```text
-$daily-paper-recommender 初始化我的阅读系统
+$otter init
 ```
 
 skill 不会假设新仓库里已经有你的阅读数据，也不会先让你概括自己的兴趣。它先让你点选一两个具体领域，再展示 6–8 篇真实论文，让你选出现在会打开的几篇；必要时再做一次具体的二选一。首轮画像可以不完整，其余偏好从后续阅读中逐步学习。之后可以说：
 
 ```text
-$daily-paper-recommender 推荐今天的一篇论文
+$otter recommend
+$otter write <paper-id 或论文链接>
 ```
 
-推荐或文章生成完成后，skill 会运行 `npm run content:sync`，网站从 `public/local/catalog.json` 读取本地内容。该目录和 `.paper-daily/` 都已忽略。
+`recommend` 只生成推荐卡；`write` 才会启动独立作者、逻辑审查和首次阅读检查。推荐或文章生成完成后，skill 会运行 `npm run content:sync`，网站从 `public/local/catalog.json` 读取本地内容。该目录和 `.paper-daily/` 都已忽略。
 
 ## 仓库结构
 
@@ -54,13 +55,13 @@ $daily-paper-recommender 推荐今天的一篇论文
 app/ components/                阅读网站与反馈界面
 db/ drizzle/                    用户行为数据与迁移
 scripts/paperctl.py              初始化、校验、事件记录和网站同步
-skills/daily-paper-recommender/  画像初始化与每日推荐主流程
+skills/otter/  画像初始化与每日推荐主流程
 skills/sujianlin-write-skills/   中文技术精读写作子流程
 lib/                             公共类型与反馈校验
 .github/                         CI、Dependabot 和 Issue 模板
 ```
 
-数据格式和推荐原则分别见 [data-model.md](skills/daily-paper-recommender/references/data-model.md) 与 [recommendation.md](skills/daily-paper-recommender/references/recommendation.md)。
+数据格式和推荐原则分别见 [data-model.md](skills/otter/references/data-model.md) 与 [recommendation.md](skills/otter/references/recommendation.md)。
 
 ## 反馈如何影响推荐
 

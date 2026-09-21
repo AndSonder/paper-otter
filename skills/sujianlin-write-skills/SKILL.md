@@ -7,6 +7,10 @@ description: 将不同学科的学术论文写成中文自然、论证连贯、�
 
 目标读者愿意认真读，但不应替文章补关键推理。沿用项目名称，学习技术解释方法，写原创文章。
 
+## 作者上下文
+
+完整论文阅读稿必须由不继承主线程历史的新作者 agent 执笔。只给作者原始阅读目标、读者背景、论文原文或固定版本、可核查证据和本 skill；不要给它主线程已有的摘要、讲解、推荐文案、用户对旧稿的批评或预设结论。作者从 evidence 与 logic draft 开始，而不是修补一篇先写好的短稿。后续逻辑审查和首次阅读检查再分别使用两个新的独立上下文；作者根据报告修订。短段落润色不受此限制。
+
 
 ## 写作与修订
 
@@ -22,7 +26,7 @@ description: 将不同学科的学术论文写成中文自然、论证连贯、�
 
 完整文章保存 `logic-draft.md`、`logic-review.md`、实际送读的 `reader-draft.md`、`reader-report.md`、最终 `article.md`，以及简短的 `revision-notes.md` 和 `evidence.md`。阶段文件用于追溯，用户通常只读最终正文。短段落润色直接交付改稿，除非用户要求，不生成这些阶段文件，也不套用完整文章的送读流程。修改后核对实际保存稿，尤其检查本轮新加的推理、事实和图注；模型读者通过不等于真实用户满意。
 
-由每日推荐框架调用时，验证通过后生成 `writing.json`：`version` 为 1，`status` 为 `complete`，`pipeline` 为 `sujianlin-write-skills`，`articleSha256` 为最终 `article.md` UTF-8 内容的 SHA256。修改正文后必须重新验证并更新哈希；没有完成标记的正文不会被网站发布。
+由 Paper Otter 调用时，必须通过 `paperctl.py writing-begin` 和逐阶段 `writing-record` 建立有序哈希链；不得手写 `writing.json` 或 `writing-workflow.json`。最后一次登记 `article` 后，脚本生成 version 2 completion manifest。修改已登记的任一阶段文件都会使发布失败，必须明确重启写作流程；没有完成标记的正文不会被网站发布。
 
 由每日推荐框架调用时，以上文件保存在 `.paper-daily/papers/<paper-id>/`，不得加入框架仓库。
 

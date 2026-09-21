@@ -26,6 +26,8 @@
 
 正文中的本地图片使用 `/local/papers/<paper-id>/<文件名>`；`paperctl.py sync` 会把 `assets/` 同步到对应路径。
 
+完整精读稿还包含 `writing-workflow.json` 与 `writing.json`。它们只能由 `paperctl.py writing-begin` 和按顺序执行的 `writing-record` 生成。前者保存 evidence、逻辑稿、独立逻辑审查、送读稿、独立读者报告、修订记录与最终稿的哈希链；后者是完成清单。手写、跳步、提前创建最终稿或登记后修改任一阶段文件都会导致发布失败。
+
 ## candidates/YYYY-MM-DD.json
 
 保存检索意图、候选证据卡、发表或报告状态、来源核验、学习价值准入判断、逐维排序、淘汰原因、最终顺序和模型不确定性。字段示例见 [来源与学习价值门槛](source-quality.md)。不要只保存总分，也不要用顶会或机构名称替代内容判断。
