@@ -84,7 +84,7 @@ export function useReading(paperId: string | null, exposedPaperIds: string[]) {
       const history = await response.json() as ReadingResponse;
       const blob = new Blob([JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), ...history },null,2)], { type: "application/json" });
       const url = URL.createObjectURL(blob), link = document.createElement("a");
-      link.href = url; link.download = "paper-daily-reading.json"; link.click(); URL.revokeObjectURL(url);
+      link.href = url; link.download = "paper-otter-reading.json"; link.click(); URL.revokeObjectURL(url);
     } catch(e) { setError(e instanceof Error ? e.message : "导出失败"); }
   }
   return { records, error, ready, pending, elapsed, progress, feedback, reload, exportHistory };
