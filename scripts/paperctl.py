@@ -56,6 +56,14 @@ def reviewed_article(paper_dir: Path) -> str:
         raise SystemExit(f"{manifest_path}: article hash does not match article.md; run the writing validation again")
     return content
 
+def daily_order() -> list[str]:
+    daily_root = STATE / "daily"
+    daily_files = sorted(daily_root.glob("*.json"), reverse=True) if daily_root.exists() else []
+    if not daily_files: return []
+    daily = load_json(daily_files[0])
+    ordered = [daily.get("primary"), *daily.get("alternatives", [])]
+    return [paper_id for paper_id in ordered if isinstance(paper_id, str) and paper_id]
+
 def sync() -> None:
     papers = []
     source_root = STATE / "papers"
@@ -72,6 +80,8 @@ def sync() -> None:
                 asset_target = ROOT / "public" / "local" / "papers" / metadata["id"]
                 asset_target.mkdir(parents=True, exist_ok=True)
                 shutil.copytree(asset_source, asset_target, dirs_exist_ok=True)
+    order = {paper_id: index for index, paper_id in enumerate(daily_order())}
+    papers.sort(key=lambda paper: (order.get(paper["id"], len(order)), paper["id"]))
     CATALOG.parent.mkdir(parents=True, exist_ok=True)
     CATALOG.write_text(json.dumps({"version": 1, "papers": papers}, ensure_ascii=False) + "\n")
     print(f"Published {len(papers)} local papers to {CATALOG}")

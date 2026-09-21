@@ -54,3 +54,17 @@ test('rejects a stale completion manifest after article edits',async()=> {
   assert.notEqual(result.status,0);
   assert.match(result.stderr + result.stdout,/article hash does not match/);
 });
+
+test('orders the latest daily primary first instead of using folder order',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-daily-order-'));
+  for (const id of ['01-older','deepseek-v41']) {
+    const paperDir=join(root,'.paper-daily','papers',id); await mkdir(paperDir,{recursive:true});
+    await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata(id)));
+  }
+  const dailyDir=join(root,'.paper-daily','daily'); await mkdir(dailyDir,{recursive:true});
+  await writeFile(join(dailyDir,'2026-09-20.json'),JSON.stringify({primary:'01-older',alternatives:[]}));
+  await writeFile(join(dailyDir,'2026-09-21.json'),JSON.stringify({primary:'deepseek-v41',alternatives:['01-older']}));
+  run(root,'sync');
+  const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
+  assert.deepEqual(catalog.papers.map(paper=>paper.id),['deepseek-v41','01-older']);
+});
