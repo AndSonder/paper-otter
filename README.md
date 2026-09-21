@@ -47,7 +47,7 @@ $otter recommend
 $otter write <paper-id 或论文链接>
 ```
 
-`recommend` 只生成推荐卡；`write` 才会启动独立作者、逻辑审查和首次阅读检查。推荐或文章生成完成后，skill 会运行 `npm run content:sync`，网站从 `public/local/catalog.json` 读取本地内容。该目录和 `.paper-daily/` 都已忽略。
+`recommend` 只在私有状态中生成推荐卡，不会把空文章发布到网站；`write` 才会启动独立作者、逻辑审查和首次阅读检查。只有完整文章通过门禁后，skill 才运行 `npm run content:sync`。网站从 `public/local/catalog.json` 读取成品文章，该目录和 `.paper-daily/` 都已忽略。
 
 ## 仓库结构
 

@@ -17,14 +17,13 @@ async function completeWriting(root,paperDir,article) {
   }
 }
 
-test('publishes recommendation metadata without pretending it is an article',async()=> {
+test('does not publish recommendation metadata as an empty website article',async()=> {
   const root=await mkdtemp(join(tmpdir(),'paper-otter-metadata-'));
   const paperDir=join(root,'.paper-daily','papers','test.0001'); await mkdir(paperDir,{recursive:true});
   await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata('test.0001')));
   run(root,'sync');
   const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
-  assert.equal(catalog.papers[0].markdown,'');
-  assert.equal(catalog.papers[0].contentStatus,'metadata');
+  assert.deepEqual(catalog.papers,[]);
 });
 
 test('publishes an article only after the complete writing workflow',async()=> {
@@ -77,6 +76,7 @@ test('orders the latest daily primary first instead of using folder order',async
   for (const id of ['01-older','deepseek-v41']) {
     const paperDir=join(root,'.paper-daily','papers',id); await mkdir(paperDir,{recursive:true});
     await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata(id)));
+    await completeWriting(root,paperDir,`# ${id}\n`);
   }
   const dailyDir=join(root,'.paper-daily','daily'); await mkdir(dailyDir,{recursive:true});
   await writeFile(join(dailyDir,'2026-09-20.json'),JSON.stringify({primary:'01-older',alternatives:[]}));

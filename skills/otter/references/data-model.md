@@ -24,6 +24,8 @@
 
 必须包含 `id`、`title`、`englishTitle`、`year`、`tags`、`minutes`、`reason` 和 `source`。可包含 `terms`、`outline`。同目录 `article.md` 是可选中文精读稿，`assets/` 保存本地图片。
 
+没有通过完整写作门禁时，`paper.json` 只存在于私有推荐状态，不会出现在网站 catalog。网站不发布 metadata-only 论文、空正文或占位文章。
+
 正文中的本地图片使用 `/local/papers/<paper-id>/<文件名>`；`paperctl.py sync` 会把 `assets/` 同步到对应路径。
 
 完整精读稿还包含 `writing-workflow.json` 与 `writing.json`。它们只能由 `paperctl.py writing-begin` 和按顺序执行的 `writing-record` 生成。前者保存 evidence、逻辑稿、独立逻辑审查、送读稿、独立读者报告、修订记录与最终稿的哈希链；后者是完成清单。手写、跳步、提前创建最终稿或登记后修改任一阶段文件都会导致发布失败。

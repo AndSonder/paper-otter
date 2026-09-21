@@ -33,7 +33,7 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 
 每天默认交付一篇主读和最多两篇备选。主读必须给出：它连接到哪个当前目标、今天为什么值得读、来源类型与发表状态、预计阅读时间、需要的前置知识、可能不适合的原因。推荐理由要引用候选的具体贡献或实验，不写泛泛的“与你兴趣相关”。没有候选通过门槛时，明确说今天没有合格主读，可以只给“探索候选”，不得为了完成每日任务降低标准。
 
-把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。推荐阶段只写 `paper.json` 元数据，`sections` 必须省略或保持空数组；严禁用摘要改写、提纲或占位段落冒充正文。
+把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。推荐阶段只写私有的 `paper.json` 元数据，`sections` 必须省略或保持空数组；严禁用摘要改写、提纲或占位段落冒充正文。未完成写作门禁的论文不得同步到网站 catalog，不显示空文章、占位页或“正文稍后生成”的卡片。
 
 `$otter write` 必须调用仓库内 `skills/sujianlin-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。开始前运行 `python3 scripts/paperctl.py writing-begin <paper-id>`；若用户明确要求废弃旧稿重写，使用 `--restart`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。
 
@@ -53,11 +53,13 @@ python3 scripts/paperctl.py writing-record <paper-id> article
 
 `logic-review` 和 `reader-report` 必须来自 skill 要求的独立上下文。文章必须从 evidence 与 logic draft 生长出来；禁止先写最终稿，再倒填阶段文件。已有聊天回答、短导读或研究笔记只能作为素材放入 evidence，不能复制成 logic draft。不要把生成文章提交到框架仓库。`paperctl.py sync` 会校验阶段顺序、每阶段哈希链和最终 manifest；不要手写 `writing.json` 或 `writing-workflow.json`，也不要绕过门禁。
 
-完成或更新论文后运行：
+只有 `$otter write` 完成全部阶段后才运行：
 
 ```sh
 python3 scripts/paperctl.py sync
 ```
+
+`init` 与 `recommend` 不得为了展示推荐结果调用 sync 发布空文章；推荐记录留在 `.paper-daily/daily/` 和 `.paper-daily/papers/`，直到对应正文完成。
 
 ## 从反馈学习
 

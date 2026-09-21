@@ -123,12 +123,16 @@ def daily_order() -> list[str]:
 
 def sync() -> None:
     papers = []
+    published_assets = ROOT / "public" / "local" / "papers"
+    if published_assets.exists(): shutil.rmtree(published_assets)
     source_root = STATE / "papers"
     if source_root.exists():
         for metadata_path in sorted(source_root.glob("*/paper.json")):
             metadata = load_json(metadata_path); validate_paper(metadata, metadata_path)
-            metadata["markdown"] = reviewed_article(metadata_path.parent)
-            metadata["contentStatus"] = "reviewed" if metadata["markdown"] else "metadata"
+            article = reviewed_article(metadata_path.parent)
+            if not article: continue
+            metadata["markdown"] = article
+            metadata["contentStatus"] = "reviewed"
             metadata["sections"] = []
             metadata.setdefault("terms", []); metadata.setdefault("outline", [])
             papers.append(metadata)
