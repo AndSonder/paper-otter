@@ -38,6 +38,18 @@ test('publishes an article only after the complete writing workflow',async()=> {
   assert.equal(catalog.papers[0].contentStatus,'reviewed');
 });
 
+test('rewrites private relative image paths to published paper assets',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-images-'));
+  const paperDir=join(root,'.paper-daily','papers','image-paper'); await mkdir(join(paperDir,'assets'),{recursive:true});
+  await writeFile(join(paperDir,'paper.json'),JSON.stringify(metadata('image-paper')));
+  await writeFile(join(paperDir,'assets','figure.png'),'png-bytes');
+  await completeWriting(root,paperDir,'![机制图](assets/figure.png)\n');
+  run(root,'sync');
+  const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
+  assert.match(catalog.papers[0].markdown,/\/local\/papers\/image-paper\/figure\.png/);
+  assert.equal(await readFile(join(root,'public','local','papers','image-paper','figure.png'),'utf8'),'png-bytes');
+});
+
 test('rejects an article that bypasses the writing workflow',async()=> {
   const root=await mkdtemp(join(tmpdir(),'paper-otter-incomplete-'));
   const paperDir=join(root,'.paper-daily','papers','test.0003'); await mkdir(paperDir,{recursive:true});

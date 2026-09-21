@@ -121,6 +121,9 @@ def daily_order() -> list[str]:
     ordered = [daily.get("primary"), *daily.get("alternatives", [])]
     return [paper_id for paper_id in ordered if isinstance(paper_id, str) and paper_id]
 
+def published_markdown(article: str, paper_id: str) -> str:
+    return article.replace("](assets/", f"](/local/papers/{paper_id}/")
+
 def sync() -> None:
     papers = []
     published_assets = ROOT / "public" / "local" / "papers"
@@ -131,7 +134,7 @@ def sync() -> None:
             metadata = load_json(metadata_path); validate_paper(metadata, metadata_path)
             article = reviewed_article(metadata_path.parent)
             if not article: continue
-            metadata["markdown"] = article
+            metadata["markdown"] = published_markdown(article, metadata["id"])
             metadata["contentStatus"] = "reviewed"
             metadata["sections"] = []
             metadata.setdefault("terms", []); metadata.setdefault("outline", [])
