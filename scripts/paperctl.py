@@ -37,7 +37,11 @@ def initialize(profile_path: Path) -> None:
 def validate_paper(metadata: dict, path: Path) -> None:
     missing = sorted(REQUIRED_PAPER - metadata.keys())
     if missing: raise SystemExit(f"{path} is missing keys: {', '.join(missing)}")
+    if not isinstance(metadata["year"], str): raise SystemExit(f"{path}: year must be a string")
     if not isinstance(metadata["tags"], list) or not all(isinstance(v, str) for v in metadata["tags"]): raise SystemExit(f"{path}: tags must be a string array")
+    terms = metadata.get("terms", [])
+    if not isinstance(terms, list) or not all(isinstance(term, dict) and isinstance(term.get("name"), str) and isinstance(term.get("meaning"), str) for term in terms):
+        raise SystemExit(f"{path}: terms must contain name and meaning strings")
 
 def reviewed_article(paper_dir: Path) -> str:
     article = paper_dir / "article.md"

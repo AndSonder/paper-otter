@@ -68,3 +68,12 @@ test('orders the latest daily primary first instead of using folder order',async
   const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
   assert.deepEqual(catalog.papers.map(paper=>paper.id),['deepseek-v41','01-older']);
 });
+
+test('rejects paper metadata that the browser would silently filter',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-browser-schema-'));
+  const paperDir=join(root,'.paper-daily','papers','bad-year'); await mkdir(paperDir,{recursive:true});
+  await writeFile(join(paperDir,'paper.json'),JSON.stringify({...metadata('bad-year'),year:2026}));
+  const result=execute(root,'sync');
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr + result.stdout,/year must be a string/);
+});
