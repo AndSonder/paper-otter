@@ -1,0 +1,4 @@
+interface:
+  display_name: "中文技术讲解"
+  short_description: "把不同学科的论文写成论证清楚、证据可复核的原创中文阅读稿"
+  default_prompt: "使用 $sujianlin-write-skills，把这份论文资料写成适合认真阅读的原创中文文章。"
