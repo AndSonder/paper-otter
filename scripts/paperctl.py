@@ -58,13 +58,13 @@ def validate_paper(metadata: dict, path: Path) -> None:
 def reviewed_article(paper_dir: Path) -> str:
     return reviewed_content(
         paper_dir, "article.md", "writing.json", "writing-workflow.json",
-        WRITING_FILES, WRITING_STAGES, STAGE_FILES, "paperId", "sujianlin-write-skills",
+        WRITING_FILES, WRITING_STAGES, STAGE_FILES, "paperId", "zh-write-skills",
     )
 
 def reviewed_report(report_dir: Path) -> str:
     return reviewed_content(
         report_dir, "article.md", "research-writing.json", "research-workflow.json",
-        RESEARCH_FILES, RESEARCH_STAGES, RESEARCH_STAGE_FILES, "reportId", "sujianlin-research",
+        RESEARCH_FILES, RESEARCH_STAGES, RESEARCH_STAGE_FILES, "reportId", "zh-research",
     )
 
 def reviewed_content(content_dir: Path, content_name: str, manifest_name: str, workflow_name: str,
@@ -133,7 +133,7 @@ def writing_record(paper_id: str, stage: str) -> None:
     workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
     if stage == "article":
         workflow_digest = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
-        manifest = {"version": 2, "status": "complete", "pipeline": "sujianlin-write-skills", "articleSha256": digest, "workflowSha256": workflow_digest}
+        manifest = {"version": 2, "status": "complete", "pipeline": "zh-write-skills", "articleSha256": digest, "workflowSha256": workflow_digest}
         (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
         print(f"Completed ordered writing workflow for {paper_id}")
     else: print(f"Recorded {stage}; next stage: {WRITING_STAGES[len(completed)]}")
@@ -172,7 +172,7 @@ def research_record(report_id: str, stage: str) -> None:
     workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
     if stage == "article":
         workflow_digest = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
-        manifest = {"version": 2, "status": "complete", "pipeline": "sujianlin-research", "articleSha256": digest, "workflowSha256": workflow_digest}
+        manifest = {"version": 2, "status": "complete", "pipeline": "zh-research", "articleSha256": digest, "workflowSha256": workflow_digest}
         (report_dir / "research-writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
         print(f"Completed ordered research workflow for {report_id}")
     else: print(f"Recorded {stage}; next stage: {RESEARCH_STAGES[len(completed)]}")
@@ -195,7 +195,7 @@ def writing_format(paper_id: str) -> None:
     workflow["formatFixes"] = [*workflow.get("formatFixes", []), {"kind": "display-math-delimiters", "recordedAt": datetime.now(timezone.utc).isoformat()}]
     workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
     workflow_digest = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
-    manifest = {"version": 2, "status": "complete", "pipeline": "sujianlin-write-skills", "articleSha256": digest, "workflowSha256": workflow_digest}
+    manifest = {"version": 2, "status": "complete", "pipeline": "zh-write-skills", "articleSha256": digest, "workflowSha256": workflow_digest}
     (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     print(f"Applied deterministic article format fixes for {paper_id}")
 

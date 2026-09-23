@@ -16,7 +16,7 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 - `$otter write <paper-id 或论文链接>`：为指定论文生成中文精读稿。必须从有序写作状态机开始，不能把已经写好的摘要、速读稿或聊天回答补齐文件后冒充完整流程。
 - `$otter research <问题>`：围绕一个明确问题生成多来源中文调研报告。必须先定义范围和截至日期，再完成来源审计、证据矩阵、综合写作与独立审查；禁止把逐篇摘要拼成调研。
 
-只暴露 `$otter`，不要保留旧入口或单独暴露写作 skill；`$otter write` 在内部调用 `sujianlin-write-skills`。
+只暴露 `$otter`，不要保留旧入口或单独暴露写作 skill；`$otter write` 在内部调用 `zh-write-skills`。
 
 ## 首次初始化
 
@@ -36,9 +36,9 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 
 把候选审计信息写入 `.paper-daily/candidates/YYYY-MM-DD.json`，把最终选择写入 `.paper-daily/daily/YYYY-MM-DD.json`。推荐阶段只写私有的 `paper.json` 元数据，`sections` 必须省略或保持空数组；严禁用摘要改写、提纲或占位段落冒充正文。未完成写作门禁的论文不得同步到网站 catalog，不显示空文章、占位页或“正文稍后生成”的卡片。
 
-`$otter write` 必须调用仓库内 `skills/sujianlin-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。开始前运行 `python3 scripts/paperctl.py writing-begin <paper-id>`；若用户明确要求废弃旧稿重写，使用 `--restart`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。
+`$otter write` 必须调用仓库内 `skills/zh-write-skills` 的完整流程，产物放入 `.paper-daily/papers/<paper-id>/`。开始前运行 `python3 scripts/paperctl.py writing-begin <paper-id>`；若用户明确要求废弃旧稿重写，使用 `--restart`。根据论文类型调整重点：理论论文重推理，实验论文重设计与证据，系统论文重机制与边界，综述论文重分类依据与争议。
 
-主线程只负责准备原始阅读目标、读者背景、论文原文和可核查证据，不写正文。必须新建一个**不继承对话历史的作者 agent**，只向它提供这些材料和 `sujianlin-write-skills`；不能提供主线程已经写过的摘要、讲解、推荐文案、用户对旧稿的批评或希望它得出的答案。作者 agent 从 evidence 开始形成 logic draft，并在逻辑审查和读者检查后负责修订直至 article。逻辑审查与首次阅读检查分别使用另外两个不继承历史的新上下文，三者不能是同一个 agent。工具不支持新上下文时，不得生成或发布完整精读稿；只能保留推荐卡并说明缺少写作运行条件。
+主线程只负责准备原始阅读目标、读者背景、论文原文和可核查证据，不写正文。必须新建一个**不继承对话历史的作者 agent**，只向它提供这些材料和 `zh-write-skills`；不能提供主线程已经写过的摘要、讲解、推荐文案、用户对旧稿的批评或希望它得出的答案。作者 agent 从 evidence 开始形成 logic draft，并在逻辑审查和读者检查后负责修订直至 article。逻辑审查与首次阅读检查分别使用另外两个不继承历史的新上下文，三者不能是同一个 agent。工具不支持新上下文时，不得生成或发布完整精读稿；只能保留推荐卡并说明缺少写作运行条件。
 
 每一阶段写完后立即登记，不能提前创建后续文件：
 
@@ -64,7 +64,7 @@ python3 scripts/paperctl.py sync
 
 ## 多来源调研
 
-`$otter research` 按 [调研报告流程](references/research.md) 工作，并在内部调用 `sujianlin-write-skills` 的多来源调研模式。产物放在 `.paper-daily/reports/<report-id>/`，不得提交到公共仓库。报告元数据写入 `report.json`；至少包含与论文卡兼容的 `id`、中英文标题、年份、标签、预计阅读时间、调研价值和主要入口链接。
+`$otter research` 按 [调研报告流程](references/research.md) 工作，并在内部调用 `zh-write-skills` 的多来源调研模式。产物放在 `.paper-daily/reports/<report-id>/`，不得提交到公共仓库。报告元数据写入 `report.json`；至少包含与论文卡兼容的 `id`、中英文标题、年份、标签、预计阅读时间、调研价值和主要入口链接。
 
 开始前运行：
 

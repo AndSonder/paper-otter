@@ -1,5 +1,5 @@
 ---
-name: sujianlin-write-skills
+name: zh-write-skills
 description: 将学术论文或多来源技术调研写成中文自然、论证连贯、图文配合的原创阅读稿。用于论文导读、理论或机制讲解、实证研究解读、多来源调研、中文改稿，以及从论文源码定位图片。
 ---
 

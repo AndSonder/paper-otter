@@ -57,7 +57,7 @@ app/ components/                阅读网站与反馈界面
 db/ drizzle/                    用户行为数据与迁移
 scripts/paperctl.py              初始化、校验、事件记录和网站同步
 skills/otter/                    初始化、推荐、精读与专题调研
-skills/sujianlin-write-skills/   中文技术内容写作子流程
+skills/zh-write-skills/   中文技术内容写作子流程
 lib/                             公共类型与反馈校验
 .github/                         CI、Dependabot 和 Issue 模板
 ```
