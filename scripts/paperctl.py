@@ -143,13 +143,14 @@ def writing_format(paper_id: str) -> None:
     (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     print(f"Applied deterministic article format fixes for {paper_id}")
 
-def daily_order() -> list[str]:
-    daily_root = STATE / "daily"
-    daily_files = sorted(daily_root.glob("*.json"), reverse=True) if daily_root.exists() else []
-    if not daily_files: return []
-    daily = load_json(daily_files[0])
-    ordered = [daily.get("primary"), *daily.get("alternatives", [])]
-    return [paper_id for paper_id in ordered if isinstance(paper_id, str) and paper_id]
+def article_added_at(paper_dir: Path) -> str:
+    workflow = load_json(paper_dir / "writing-workflow.json")
+    completed = workflow.get("completed", [])
+    article = next((item for item in completed if isinstance(item, dict) and item.get("stage") == "article"), None)
+    recorded_at = article.get("recordedAt") if article else None
+    if not isinstance(recorded_at, str) or not recorded_at:
+        raise SystemExit(f"{paper_dir}: article checkpoint has no recordedAt timestamp")
+    return recorded_at
 
 def published_markdown(article: str, paper_id: str) -> str:
     return article.replace("](assets/", f"](/local/papers/{paper_id}/")
@@ -168,17 +169,17 @@ def sync() -> None:
             metadata["contentStatus"] = "reviewed"
             metadata["sections"] = []
             metadata.setdefault("terms", []); metadata.setdefault("outline", [])
-            papers.append(metadata)
+            papers.append((article_added_at(metadata_path.parent), metadata))
             asset_source = metadata_path.parent / "assets"
             if asset_source.exists():
                 asset_target = ROOT / "public" / "local" / "papers" / metadata["id"]
                 asset_target.mkdir(parents=True, exist_ok=True)
                 shutil.copytree(asset_source, asset_target, dirs_exist_ok=True)
-    order = {paper_id: index for index, paper_id in enumerate(daily_order())}
-    papers.sort(key=lambda paper: (order.get(paper["id"], len(order)), paper["id"]))
+    papers.sort(key=lambda item: (item[0], item[1]["id"]), reverse=True)
+    ordered_papers = [paper for _, paper in papers]
     CATALOG.parent.mkdir(parents=True, exist_ok=True)
-    CATALOG.write_text(json.dumps({"version": 1, "papers": papers}, ensure_ascii=False) + "\n")
-    print(f"Published {len(papers)} local papers to {CATALOG}")
+    CATALOG.write_text(json.dumps({"version": 1, "papers": ordered_papers}, ensure_ascii=False) + "\n")
+    print(f"Published {len(ordered_papers)} local papers to {CATALOG}")
 
 def validate() -> None:
     profile_path = STATE / "profile.json"

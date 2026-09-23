@@ -112,7 +112,7 @@ test('rejects invalid KaTeX before completing an article',async()=> {
   assert.match(result.stderr + result.stdout,/invalid KaTeX/);
 });
 
-test('orders the latest daily primary first instead of using folder order',async()=> {
+test('orders the newest completed article first instead of using folder or daily order',async()=> {
   const root=await mkdtemp(join(tmpdir(),'paper-otter-daily-order-'));
   for (const id of ['01-older','deepseek-v41']) {
     const paperDir=join(root,'.paper-daily','papers',id); await mkdir(paperDir,{recursive:true});
@@ -121,7 +121,7 @@ test('orders the latest daily primary first instead of using folder order',async
   }
   const dailyDir=join(root,'.paper-daily','daily'); await mkdir(dailyDir,{recursive:true});
   await writeFile(join(dailyDir,'2026-09-20.json'),JSON.stringify({primary:'01-older',alternatives:[]}));
-  await writeFile(join(dailyDir,'2026-09-21.json'),JSON.stringify({primary:'deepseek-v41',alternatives:['01-older']}));
+  await writeFile(join(dailyDir,'2026-09-21.json'),JSON.stringify({primary:'01-older',alternatives:['deepseek-v41']}));
   run(root,'sync');
   const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
   assert.deepEqual(catalog.papers.map(paper=>paper.id),['deepseek-v41','01-older']);
