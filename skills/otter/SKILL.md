@@ -1,6 +1,6 @@
 ---
 name: otter
-description: 初始化并运行一个由大模型驱动的个性化论文阅读系统。用于首次建立本地读者画像、每天检索和推荐论文、根据打开时长与显式反馈更新偏好，或把推荐结果同步到每日论文网站。
+description: 初始化并运行一个由大模型驱动的个性化论文阅读系统。用于建立本地读者画像、每天检索和推荐论文、生成单篇中文精读或多来源中文调研、根据阅读反馈更新偏好，以及把成品同步到阅读网站。
 ---
 
 # Paper Otter：个性化论文阅读系统
@@ -9,11 +9,12 @@ description: 初始化并运行一个由大模型驱动的个性化论文阅读�
 
 ## 命令入口
 
-只接受三个动作；缺少动作时，先让用户从具体动作中选择，不猜测：
+只接受四个动作；缺少动作时，先让用户从具体动作中选择，不猜测：
 
 - `$otter init`：从零初始化画像并生成首批候选。
 - `$otter recommend`：读取现有画像和反馈，推荐今天的论文。这个动作只能生成候选审计、daily 选择和 `paper.json`，不能生成正文。
 - `$otter write <paper-id 或论文链接>`：为指定论文生成中文精读稿。必须从有序写作状态机开始，不能把已经写好的摘要、速读稿或聊天回答补齐文件后冒充完整流程。
+- `$otter research <问题>`：围绕一个明确问题生成多来源中文调研报告。必须先定义范围和截至日期，再完成来源审计、证据矩阵、综合写作与独立审查；禁止把逐篇摘要拼成调研。
 
 只暴露 `$otter`，不要保留旧入口或单独暴露写作 skill；`$otter write` 在内部调用 `sujianlin-write-skills`。
 
@@ -60,6 +61,34 @@ python3 scripts/paperctl.py sync
 ```
 
 `init` 与 `recommend` 不得为了展示推荐结果调用 sync 发布空文章；推荐记录留在 `.paper-daily/daily/` 和 `.paper-daily/papers/`，直到对应正文完成。
+
+## 多来源调研
+
+`$otter research` 按 [调研报告流程](references/research.md) 工作，并在内部调用 `sujianlin-write-skills` 的多来源调研模式。产物放在 `.paper-daily/reports/<report-id>/`，不得提交到公共仓库。报告元数据写入 `report.json`；至少包含与论文卡兼容的 `id`、中英文标题、年份、标签、预计阅读时间、调研价值和主要入口链接。
+
+开始前运行：
+
+```sh
+python3 scripts/paperctl.py research-begin <report-id>
+```
+
+逐阶段登记，不能提前创建后续文件：
+
+```sh
+python3 scripts/paperctl.py research-record <report-id> scope
+python3 scripts/paperctl.py research-record <report-id> sources
+python3 scripts/paperctl.py research-record <report-id> evidence-map
+python3 scripts/paperctl.py research-record <report-id> synthesis-draft
+python3 scripts/paperctl.py research-record <report-id> logic-review
+python3 scripts/paperctl.py research-record <report-id> reader-draft
+python3 scripts/paperctl.py research-record <report-id> reader-report
+python3 scripts/paperctl.py research-record <report-id> revision-notes
+python3 scripts/paperctl.py research-record <report-id> article
+```
+
+完整调研报告同样由不继承主线程历史的新作者执笔；逻辑审查和首次阅读检查分别使用另外两个干净上下文。主线程只准备原始问题、读者背景和一手资料入口。作者负责范围、来源审计、证据矩阵与综合稿；审稿人只看原始问题、范围和综合稿，检查路线遗漏、比较口径、反例与时间边界；首次阅读者只看送读稿。没有三个独立上下文时不得发布完整报告。
+
+报告完成全部门禁后运行 `python3 scripts/paperctl.py sync`。网站以“专题调研”标识，并与单篇精读一起按完成时间排序。未完成报告不得进入 catalog。
 
 ## 从反馈学习
 

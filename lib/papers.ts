@@ -12,6 +12,7 @@ export type Paper = {
   terms: { name: string; meaning: string }[];
   markdown?: string;
   contentStatus?: "metadata" | "reviewed";
+  contentType?: "paper" | "research";
   outline?: { title: string; id: string }[];
 };
 
@@ -28,6 +29,7 @@ export function isPaper(value: unknown): value is Paper {
     && typeof paper.reason === "string"
     && typeof paper.source === "string"
     && (paper.contentStatus === undefined || paper.contentStatus === "metadata" || paper.contentStatus === "reviewed")
+    && (paper.contentType === undefined || paper.contentType === "paper" || paper.contentType === "research")
     && Array.isArray(paper.sections)
     && Array.isArray(paper.terms);
 }

@@ -16,6 +16,14 @@ async function completeWriting(root,paperDir,article) {
     run(root,'writing-record',paperDir.split('/').at(-1),stage);
   }
 }
+async function completeResearch(root,reportDir,article) {
+  const id=reportDir.split('/').at(-1);
+  run(root,'research-begin',id);
+  for (const stage of ['scope','sources','evidence-map','synthesis-draft','logic-review','reader-draft','reader-report','revision-notes','article']) {
+    await writeFile(join(reportDir,`${stage}.md`),stage==='article'?article:`# ${stage}\n`);
+    run(root,'research-record',id,stage);
+  }
+}
 
 test('does not publish recommendation metadata as an empty website article',async()=> {
   const root=await mkdtemp(join(tmpdir(),'paper-otter-metadata-'));
@@ -36,6 +44,33 @@ test('publishes an article only after the complete writing workflow',async()=> {
   const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
   assert.equal(catalog.papers[0].markdown,article);
   assert.equal(catalog.papers[0].contentStatus,'reviewed');
+});
+
+test('publishes a research report only after the complete research workflow',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-research-'));
+  const reportDir=join(root,'.paper-daily','reports','linear-attention'); await mkdir(reportDir,{recursive:true});
+  await writeFile(join(reportDir,'report.json'),JSON.stringify({...metadata('linear-attention'),title:'线性注意力路线调研'}));
+  const article='## 调研问题\n\n多来源综合结论。\n';
+  await completeResearch(root,reportDir,article);
+  run(root,'sync');
+  const catalog=JSON.parse(await readFile(join(root,'public','local','catalog.json'),'utf8'));
+  assert.equal(catalog.papers[0].markdown,article);
+  assert.equal(catalog.papers[0].contentType,'research');
+  assert.equal(catalog.papers[0].contentStatus,'reviewed');
+});
+
+test('rejects an unfinished research report',async()=> {
+  const root=await mkdtemp(join(tmpdir(),'paper-otter-research-incomplete-'));
+  const reportDir=join(root,'.paper-daily','reports','unfinished'); await mkdir(reportDir,{recursive:true});
+  await writeFile(join(reportDir,'report.json'),JSON.stringify(metadata('unfinished')));
+  run(root,'research-begin','unfinished');
+  await writeFile(join(reportDir,'scope.md'),'# scope\n');
+  run(root,'research-record','unfinished','scope');
+  await writeFile(join(reportDir,'sources.md'),'# sources\n');
+  await writeFile(join(reportDir,'article.md'),'premature');
+  const result=execute(root,'research-record','unfinished','sources');
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr + result.stdout,/Future research stages already exist/);
 });
 
 test('rewrites private relative image paths to published paper assets',async()=> {

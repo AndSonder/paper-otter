@@ -45,9 +45,10 @@ skill 不会假设新仓库里已经有你的阅读数据，也不会先让你�
 ```text
 $otter recommend
 $otter write <paper-id 或论文链接>
+$otter research <问题>
 ```
 
-`recommend` 只在私有状态中生成推荐卡，不会把空文章发布到网站；`write` 才会启动独立作者、逻辑审查和首次阅读检查。只有完整文章通过门禁后，skill 才运行 `npm run content:sync`。网站从 `public/local/catalog.json` 读取成品文章，该目录和 `.paper-daily/` 都已忽略。
+`recommend` 只在私有状态中生成推荐卡，不会把空文章发布到网站；`write` 为一篇论文生成精读稿；`research` 围绕一个问题检索多篇论文和一手材料，建立证据矩阵后写成专题调研。后两者都会经过独立逻辑审查和首次阅读检查。只有完整成品通过门禁后，skill 才运行 `npm run content:sync`。网站从 `public/local/catalog.json` 读取成品，私有状态和发布副本都已忽略。
 
 ## 仓库结构
 
@@ -55,13 +56,13 @@ $otter write <paper-id 或论文链接>
 app/ components/                阅读网站与反馈界面
 db/ drizzle/                    用户行为数据与迁移
 scripts/paperctl.py              初始化、校验、事件记录和网站同步
-skills/otter/  画像初始化与每日推荐主流程
-skills/sujianlin-write-skills/   中文技术精读写作子流程
+skills/otter/                    初始化、推荐、精读与专题调研
+skills/sujianlin-write-skills/   中文技术内容写作子流程
 lib/                             公共类型与反馈校验
 .github/                         CI、Dependabot 和 Issue 模板
 ```
 
-数据格式和推荐原则分别见 [data-model.md](skills/otter/references/data-model.md) 与 [recommendation.md](skills/otter/references/recommendation.md)。
+数据格式、推荐原则和调研方法分别见 [data-model.md](skills/otter/references/data-model.md)、[recommendation.md](skills/otter/references/recommendation.md) 与 [research.md](skills/otter/references/research.md)。
 
 ## 反馈如何影响推荐
 

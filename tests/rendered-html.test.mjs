@@ -16,6 +16,7 @@ test('uses only the unified otter commands in the reader UI',async()=> {
   assert.match(source,/\$otter init/);
   assert.match(source,/\$otter recommend/);
   assert.match(source,/\$otter write/);
+  assert.match(source,/\$otter research/);
   assert.doesNotMatch(source,/daily-paper-recommender/);
 });
 test('persists independent feedback, makes session retries idempotent, isolates readers',async()=> {

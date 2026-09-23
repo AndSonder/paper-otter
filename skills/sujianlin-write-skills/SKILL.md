@@ -1,6 +1,6 @@
 ---
 name: sujianlin-write-skills
-description: 将不同学科的学术论文写成中文自然、论证连贯、图文配合的原创阅读稿。用于论文导读、理论或机制讲解、实证研究解读、中文改稿，以及从论文源码定位图片。
+description: 将学术论文或多来源技术调研写成中文自然、论证连贯、图文配合的原创阅读稿。用于论文导读、理论或机制讲解、实证研究解读、多来源调研、中文改稿，以及从论文源码定位图片。
 ---
 
 # 原创中文论文讲解
@@ -50,5 +50,6 @@ Paper Otter 网页的数学由 remark-math 与 KaTeX 渲染。行内公式只写
 - 修订中文或安排延伸阅读时，读 [中文与延伸](references/language-and-extensions.md)；需要句子或图文修复示例时，读 [示例](references/chinese-and-figures.md)。
 - 完整稿送独立读者前，读 [读者检查](references/reader-review.md)。只提供原始目标、背景和实际正文，不泄漏作者预期。
 - 定稿时读 [验证](references/validation-and-evaluation.md) 的作者部分；评估 skill 时再读其评估部分。
+- 写多来源调研报告时，读 Paper Otter 的 `references/research.md`；以问题和比较轴组织证据，不能把逐篇摘要拼成综述。调研同样使用干净作者、独立逻辑审查与首次阅读检查，阶段由 Paper Otter 的 research 状态机登记。
 
 研究依据见 [来源说明](references/research-basis.md)，普通写作不需要读取博客语料。

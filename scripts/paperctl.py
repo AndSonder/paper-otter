@@ -12,6 +12,9 @@ REQUIRED_PAPER = {"id", "title", "englishTitle", "year", "tags", "minutes", "rea
 WRITING_FILES = {"article.md", "evidence.md", "logic-draft.md", "logic-review.md", "reader-draft.md", "reader-report.md", "revision-notes.md"}
 WRITING_STAGES = ["evidence", "logic-draft", "logic-review", "reader-draft", "reader-report", "revision-notes", "article"]
 STAGE_FILES = {stage: f"{stage}.md" for stage in WRITING_STAGES}
+RESEARCH_STAGES = ["scope", "sources", "evidence-map", "synthesis-draft", "logic-review", "reader-draft", "reader-report", "revision-notes", "article"]
+RESEARCH_STAGE_FILES = {stage: f"{stage}.md" for stage in RESEARCH_STAGES}
+RESEARCH_FILES = set(RESEARCH_STAGE_FILES.values())
 ARTICLE_VALIDATOR = Path(__file__).with_name("validate_article.mjs")
 
 def load_json(path: Path) -> dict:
@@ -36,7 +39,7 @@ def validate_profile(profile: dict) -> None:
 def initialize(profile_path: Path) -> None:
     profile = load_json(profile_path); validate_profile(profile)
     STATE.mkdir(exist_ok=True)
-    for folder in ("papers", "daily", "candidates"): (STATE / folder).mkdir(exist_ok=True)
+    for folder in ("papers", "reports", "daily", "candidates"): (STATE / folder).mkdir(exist_ok=True)
     (STATE / "profile.json").write_text(json.dumps(profile, ensure_ascii=False, indent=2) + "\n")
     (STATE / "events.jsonl").touch(exist_ok=True)
     inferences = STATE / "inferences.json"
@@ -53,26 +56,40 @@ def validate_paper(metadata: dict, path: Path) -> None:
         raise SystemExit(f"{path}: terms must contain name and meaning strings")
 
 def reviewed_article(paper_dir: Path) -> str:
-    article = paper_dir / "article.md"
-    manifest_path = paper_dir / "writing.json"
+    return reviewed_content(
+        paper_dir, "article.md", "writing.json", "writing-workflow.json",
+        WRITING_FILES, WRITING_STAGES, STAGE_FILES, "paperId", "sujianlin-write-skills",
+    )
+
+def reviewed_report(report_dir: Path) -> str:
+    return reviewed_content(
+        report_dir, "article.md", "research-writing.json", "research-workflow.json",
+        RESEARCH_FILES, RESEARCH_STAGES, RESEARCH_STAGE_FILES, "reportId", "sujianlin-research",
+    )
+
+def reviewed_content(content_dir: Path, content_name: str, manifest_name: str, workflow_name: str,
+                     required_files: set[str], stages: list[str], stage_files: dict[str, str],
+                     identity_key: str, pipeline: str) -> str:
+    article = content_dir / content_name
+    manifest_path = content_dir / manifest_name
     if not article.exists() and not manifest_path.exists(): return ""
     if not article.exists() or not manifest_path.exists():
-        raise SystemExit(f"{paper_dir}: article.md and writing.json must be created together")
-    missing = sorted(name for name in WRITING_FILES if not (paper_dir / name).is_file())
-    if missing: raise SystemExit(f"{paper_dir}: incomplete writing workflow; missing {', '.join(missing)}")
+        raise SystemExit(f"{content_dir}: {content_name} and {manifest_name} must be created together")
+    missing = sorted(name for name in required_files if not (content_dir / name).is_file())
+    if missing: raise SystemExit(f"{content_dir}: incomplete workflow; missing {', '.join(missing)}")
     manifest = load_json(manifest_path)
-    if manifest.get("version") != 2 or manifest.get("status") != "complete" or manifest.get("pipeline") != "sujianlin-write-skills":
+    if manifest.get("version") != 2 or manifest.get("status") != "complete" or manifest.get("pipeline") != pipeline:
         raise SystemExit(f"{manifest_path}: invalid writing completion manifest")
-    workflow_path = paper_dir / "writing-workflow.json"
+    workflow_path = content_dir / workflow_name
     workflow = load_json(workflow_path)
-    if workflow.get("status") != "complete" or workflow.get("paperId") != paper_dir.name:
+    if workflow.get("status") != "complete" or workflow.get(identity_key) != content_dir.name:
         raise SystemExit(f"{workflow_path}: writing workflow is not complete")
     completed = workflow.get("completed")
-    if not isinstance(completed, list) or [item.get("stage") for item in completed if isinstance(item, dict)] != WRITING_STAGES:
+    if not isinstance(completed, list) or [item.get("stage") for item in completed if isinstance(item, dict)] != stages:
         raise SystemExit(f"{workflow_path}: writing stages are incomplete or out of order")
     previous = ""
-    for stage, item in zip(WRITING_STAGES, completed):
-        stage_path = paper_dir / STAGE_FILES[stage]
+    for stage, item in zip(stages, completed):
+        stage_path = content_dir / stage_files[stage]
         digest = hashlib.sha256(stage_path.read_bytes()).hexdigest()
         if item.get("sha256") != digest or item.get("previousSha256") != previous:
             raise SystemExit(f"{workflow_path}: stale or invalid checkpoint for {stage}")
@@ -121,6 +138,45 @@ def writing_record(paper_id: str, stage: str) -> None:
         print(f"Completed ordered writing workflow for {paper_id}")
     else: print(f"Recorded {stage}; next stage: {WRITING_STAGES[len(completed)]}")
 
+def research_begin(report_id: str, restart: bool) -> None:
+    report_dir = STATE / "reports" / report_id
+    if not (report_dir / "report.json").is_file(): raise SystemExit(f"Unknown research report: {report_id}")
+    workflow_path = report_dir / "research-workflow.json"
+    manifest_path = report_dir / "research-writing.json"
+    existing = [name for name in (*RESEARCH_FILES, workflow_path.name, manifest_path.name) if (report_dir / name).exists()]
+    if existing and not restart: raise SystemExit(f"Research files already exist for {report_id}; use --restart to discard them")
+    if restart:
+        for name in existing: (report_dir / name).unlink()
+    workflow = {"version": 1, "reportId": report_id, "status": "active", "completed": []}
+    workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
+    print(f"Started ordered research workflow for {report_id}; next stage: {RESEARCH_STAGES[0]}")
+
+def research_record(report_id: str, stage: str) -> None:
+    report_dir = STATE / "reports" / report_id
+    workflow_path = report_dir / "research-workflow.json"
+    workflow = load_json(workflow_path)
+    completed = workflow.get("completed", [])
+    expected = RESEARCH_STAGES[len(completed)] if len(completed) < len(RESEARCH_STAGES) else None
+    if workflow.get("status") != "active" or stage != expected:
+        raise SystemExit(f"Expected research stage {expected}, got {stage}")
+    stage_path = report_dir / RESEARCH_STAGE_FILES[stage]
+    if not stage_path.is_file() or not stage_path.read_text().strip(): raise SystemExit(f"Missing or empty stage file: {stage_path}")
+    if stage == "article": validate_article_format(stage_path)
+    future = [RESEARCH_STAGE_FILES[name] for name in RESEARCH_STAGES[len(completed) + 1:] if (report_dir / RESEARCH_STAGE_FILES[name]).exists()]
+    if future: raise SystemExit(f"Future research stages already exist before {stage}: {', '.join(future)}")
+    digest = hashlib.sha256(stage_path.read_bytes()).hexdigest()
+    previous = completed[-1]["sha256"] if completed else ""
+    completed.append({"stage": stage, "file": RESEARCH_STAGE_FILES[stage], "sha256": digest, "previousSha256": previous, "recordedAt": datetime.now(timezone.utc).isoformat()})
+    workflow["completed"] = completed
+    if stage == "article": workflow["status"] = "complete"
+    workflow_path.write_text(json.dumps(workflow, ensure_ascii=False, indent=2) + "\n")
+    if stage == "article":
+        workflow_digest = hashlib.sha256(workflow_path.read_bytes()).hexdigest()
+        manifest = {"version": 2, "status": "complete", "pipeline": "sujianlin-research", "articleSha256": digest, "workflowSha256": workflow_digest}
+        (report_dir / "research-writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+        print(f"Completed ordered research workflow for {report_id}")
+    else: print(f"Recorded {stage}; next stage: {RESEARCH_STAGES[len(completed)]}")
+
 def writing_format(paper_id: str) -> None:
     paper_dir = STATE / "papers" / paper_id
     workflow_path = paper_dir / "writing-workflow.json"
@@ -143,13 +199,13 @@ def writing_format(paper_id: str) -> None:
     (paper_dir / "writing.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
     print(f"Applied deterministic article format fixes for {paper_id}")
 
-def article_added_at(paper_dir: Path) -> str:
-    workflow = load_json(paper_dir / "writing-workflow.json")
+def article_added_at(content_dir: Path, workflow_name: str = "writing-workflow.json") -> str:
+    workflow = load_json(content_dir / workflow_name)
     completed = workflow.get("completed", [])
     article = next((item for item in completed if isinstance(item, dict) and item.get("stage") == "article"), None)
     recorded_at = article.get("recordedAt") if article else None
     if not isinstance(recorded_at, str) or not recorded_at:
-        raise SystemExit(f"{paper_dir}: article checkpoint has no recordedAt timestamp")
+        raise SystemExit(f"{content_dir}: article checkpoint has no recordedAt timestamp")
     return recorded_at
 
 def published_markdown(article: str, paper_id: str) -> str:
@@ -170,6 +226,23 @@ def sync() -> None:
             metadata["sections"] = []
             metadata.setdefault("terms", []); metadata.setdefault("outline", [])
             papers.append((article_added_at(metadata_path.parent), metadata))
+            asset_source = metadata_path.parent / "assets"
+            if asset_source.exists():
+                asset_target = ROOT / "public" / "local" / "papers" / metadata["id"]
+                asset_target.mkdir(parents=True, exist_ok=True)
+                shutil.copytree(asset_source, asset_target, dirs_exist_ok=True)
+    report_root = STATE / "reports"
+    if report_root.exists():
+        for metadata_path in sorted(report_root.glob("*/report.json")):
+            metadata = load_json(metadata_path); validate_paper(metadata, metadata_path)
+            article = reviewed_report(metadata_path.parent)
+            if not article: continue
+            metadata["markdown"] = published_markdown(article, metadata["id"])
+            metadata["contentStatus"] = "reviewed"
+            metadata["contentType"] = "research"
+            metadata["sections"] = []
+            metadata.setdefault("terms", []); metadata.setdefault("outline", [])
+            papers.append((article_added_at(metadata_path.parent, "research-workflow.json"), metadata))
             asset_source = metadata_path.parent / "assets"
             if asset_source.exists():
                 asset_target = ROOT / "public" / "local" / "papers" / metadata["id"]
@@ -213,6 +286,8 @@ def main() -> None:
     writing_start = sub.add_parser("writing-begin"); writing_start.add_argument("paper_id"); writing_start.add_argument("--restart", action="store_true")
     writing_checkpoint = sub.add_parser("writing-record"); writing_checkpoint.add_argument("paper_id"); writing_checkpoint.add_argument("stage", choices=WRITING_STAGES)
     writing_fix = sub.add_parser("writing-format"); writing_fix.add_argument("paper_id")
+    research_start = sub.add_parser("research-begin"); research_start.add_argument("report_id"); research_start.add_argument("--restart", action="store_true")
+    research_checkpoint = sub.add_parser("research-record"); research_checkpoint.add_argument("report_id"); research_checkpoint.add_argument("stage", choices=RESEARCH_STAGES)
     history = sub.add_parser("import-history"); history.add_argument("path", type=Path)
     add_event = sub.add_parser("event"); add_event.add_argument("paper_id"); add_event.add_argument("type", choices=["opened", "liked", "saved", "dismissed", "finished"]); add_event.add_argument("value", nargs="?", default=True)
     args = parser.parse_args()
@@ -222,6 +297,8 @@ def main() -> None:
     elif args.command == "writing-begin": writing_begin(args.paper_id, args.restart)
     elif args.command == "writing-record": writing_record(args.paper_id, args.stage)
     elif args.command == "writing-format": writing_format(args.paper_id)
+    elif args.command == "research-begin": research_begin(args.report_id, args.restart)
+    elif args.command == "research-record": research_record(args.report_id, args.stage)
     elif args.command == "import-history": import_history(args.path)
     else: event(args)
 if __name__ == "__main__": main()

@@ -65,7 +65,7 @@ export default function Reader() {
 
   if (!paper) return <div className="app">
     <header className="topbar"><span className="brand"><Image className="brand-logo" src="/paper-otter-logo.png" width={42} height={42} alt="" priority />Paper Otter</span><div className="header-tools"><span className="header-caption">让推荐从你的真实问题开始。</span><span className="avatar">阅</span></div></header>
-    <main className="setup-empty"><span className="eyebrow">PERSONAL READING SYSTEM</span><h1>{catalogReady ? "先建立你的阅读空间" : "正在读取本地阅读空间…"}</h1>{catalogReady && <><p>这个仓库不预装论文。先用 <code>$otter init</code> 建立画像，再用 <code>$otter recommend</code> 获取候选；只有执行 <code>$otter write</code> 并通过完整审稿后，文章才会出现在这里。</p><ol><li>初始化本地读者画像</li><li>从真实候选中选择今天的论文</li><li>完成写作与审稿后回到这里阅读</li></ol><div className="setup-command">$otter init</div></>}</main>
+    <main className="setup-empty"><span className="eyebrow">PERSONAL READING SYSTEM</span><h1>{catalogReady ? "先建立你的阅读空间" : "正在读取本地阅读空间…"}</h1>{catalogReady && <><p>这个仓库不预装论文。先用 <code>$otter init</code> 建立画像，再用 <code>$otter recommend</code> 获取候选；用 <code>$otter write</code> 生成单篇精读，或用 <code>$otter research</code> 完成多来源专题调研。内容通过完整审稿后才会出现在这里。</p><ol><li>初始化本地读者画像</li><li>从真实候选中选择今天的论文</li><li>完成写作与审稿后回到这里阅读</li></ol><div className="setup-command">$otter init</div></>}</main>
   </div>;
 
   return <div className={focus ? "app focused" : "app"}>
@@ -82,7 +82,7 @@ export default function Reader() {
         <div className="issue-date">{date}</div><div className="eyebrow">YOUR DAILY READING</div>
         <h2 className="sidebar-heading">今日推荐 <span>{String(papers.length).padStart(2,"0")}</span></h2>
         <button className={`paper-choice primary ${selected === papers[0].id && view === "today" ? "selected" : ""}`} onClick={() => openPaper(papers[0])}>
-          <span className="choice-label">▤ 今日主读 · 完整精读</span><strong>{papers[0].title}<span>›</span></strong><small>{papers[0].tags.join(" / ")}</small><span className="choice-footer">约 {papers[0].minutes} 分钟 · 含原图与推导</span>
+          <span className="choice-label">▤ {papers[0].contentType === "research" ? "专题调研" : "今日主读 · 完整精读"}</span><strong>{papers[0].title}<span>›</span></strong><small>{papers[0].tags.join(" / ")}</small><span className="choice-footer">约 {papers[0].minutes} 分钟 · {papers[0].contentType === "research" ? "多来源证据与独立审查" : "含原图与推导"}</span>
         </button>
         <h3 className="alternative-title">换一篇读</h3>
         {papers.slice(1).map(p => <button key={p.id} className={`paper-choice alternative ${selected === p.id && view === "today" ? "selected" : ""}`} onClick={() => openPaper(p)}><strong><span className="paper-symbol">▤</span>{p.title}</strong><small>{p.tags.join(" / ")}<span>{p.minutes} 分钟</span></small>{reading.records.find(r => r.paperId === p.id)?.reason && <span className="muted">已标记 · 不感兴趣</span>}</button>)}
@@ -92,7 +92,7 @@ export default function Reader() {
         {view === "today" ? <>
           <div className="article-topline"><span>阅读库 <b>/</b> 个性化推荐 <b>/</b> {paper.tags[0]}</span><button className="quiet" onClick={() => setFocus(!focus)}>{focus ? "↙ 退出专注" : "⛶ 专注阅读"}</button></div>
           <article id="paper-article" style={{ "--reading-size": `${size}px` } as React.CSSProperties}>
-            <div className="article-meta"><span className="badge">{paper.markdown ? "今日精读" : "经典论文"}</span><span>{paper.year}</span><span>·</span><span>阅读约 {paper.minutes} 分钟</span></div>
+            <div className="article-meta"><span className="badge">{paper.contentType === "research" ? "专题调研" : paper.markdown ? "今日精读" : "经典论文"}</span><span>{paper.year}</span><span>·</span><span>阅读约 {paper.minutes} 分钟</span></div>
             <h1>{paper.title}</h1><p className="english-title">{paper.englishTitle}</p>
             <div className="reading-toolbar"><div className="feedback-actions"><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.saved} onClick={() => feedback("saved",record?.saved ? 0 : 1)}>{record?.saved ? "▣ 已收藏" : "♧ 收藏"}</button><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.liked} onClick={() => feedback("liked",record?.liked ? 0 : 1)}>{record?.liked ? "♥ 已点赞" : "♡ 点赞"}</button><span className="divider" /><button disabled={!reading.ready || reading.pending} aria-pressed={!!record?.reason} onClick={() => rejectDialog.current?.showModal()}>{record?.reason ? "⊘ 已反馈" : "⊘ 不感兴趣"}</button></div></div>
             <div className="recommendation"><span className="leaf" aria-hidden="true">❧</span><div><strong>为什么推荐给你</strong><p>{paper.reason}</p></div></div>
